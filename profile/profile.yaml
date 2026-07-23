@@ -1,0 +1,62 @@
+# Candidate profile — source of truth for all skills and the Telegram bot
+candidate:
+  name: Vasiliy
+  citizenship: RU
+  current_country: RU
+  target_country: ES
+  relocation: any_city_spain
+  goal_offer_by: "2027-02-01"
+  horizon_days: 180
+
+roles:
+  - AI Security Researcher
+  - AI Engineer
+  - AI Data Analyst
+
+level: middle
+experience_years: 2.5
+domain: AI security — threat research/analysis, agent development
+
+languages:
+  russian: native
+  english: C1
+  spanish: B2
+  work_without_spanish: true  # English-first roles OK
+
+employment:
+  preferred: formal_employment  # maximizes rights vs freelance
+  accept: [full_time, contract, hybrid, remote, office]
+  salary_min_eur_gross_year: 50000
+
+channels:
+  telegram: daily_ops
+  cursor_skills: on_demand  # buscador, entrevistador, abogado, motivador, planificador
+
+schedules_msk:
+  daily_jobs: "15:00"
+  daily_tasks: "09:00"
+  weekly_motivation: "Sat 11:00"
+  tasks_deadline: "19:00"
+
+study:
+  hours_per_day: 1
+  focus: [technical_skills, interview_prep]
+  job_review_hours_per_week: 1  # bot/agent does search; user reviews ~1h/week
+
+visa_context:
+  status: russian_citizen_in_russia
+  nie: false
+  prior_spain_paths: none
+  recent_tourist_visa: true
+
+job_search:
+  sites:
+    - InfoJobs
+    - Infoempleo
+    - Indeed ES
+    - Tecnoempleo
+    - Jooble
+    - LinkedIn (public pages only)
+  top_n_daily: 5
+  note_visa_sponsorship: true
+  tracker: data/applications.csv

@@ -1,0 +1,15 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+data/runtime/
+*.db
+.DS_Store
+Thumbs.db
+resume_raw.html
+temp_clone/
