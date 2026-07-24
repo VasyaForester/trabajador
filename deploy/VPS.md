@@ -77,3 +77,16 @@ sudo systemctl restart trabajador-bot
 | `Conflict: terminated by other getUpdates` | Two instances (PC + VPS) |
 | `Unauthorized` | Bad/revoked token in VPS `.env` |
 | Service exits immediately | Wrong path, missing `.venv`, or missing `.env` |
+| `Не найден project venv` / exit code 2 | Run via `.venv/bin/python`, or `git pull` after Linux fix to `run_bot.py` |
+| `ModuleNotFoundError: telegram` | `pip install -r requirements.txt` inside the **server** `.venv` |
+
+## Quick diagnose on VPS
+
+```bash
+sudo systemctl status trabajador-bot --no-pager
+sudo journalctl -u trabajador-bot -n 50 --no-pager
+
+# manual test (see the real traceback):
+cd /opt/trabajador
+sudo -u trabajador /opt/trabajador/.venv/bin/python /opt/trabajador/run_bot.py
+```
