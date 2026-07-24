@@ -19,19 +19,22 @@ description: >-
 - Total effort ≈ **60 minutes**
 - Mix: technical AI security / agents / data **and** interview prep
 - If yesterday incomplete: **repeat unfinished items first**, then fill remaining time
-- Each task: clear Done criteria (what “done” means in one line)
-- Tone of task list: clear, neutral, actionable
+- Language for task text sent to the user: **Russian** (sample interview answers inside tasks may require EN)
+- Each task MUST include all three fields:
+  - `title` — short name
+  - `rules` — how to do it (2–5 sentences, concrete steps, constraints)
+  - `done_criteria` — exact “Готово когда…” checklist (no vague “completed”)
+- Tone: clear, neutral, actionable. No jargon without a one-line definition.
 
 ### Output for bot / user
 ```
 🗓 {YYYY-MM-DD}
-Задачи до 19:00 МСК (~1ч):
+Задачи до 19:00 МСК (~1ч)
+Правила: делай по «Как сделать»; Done только при «Готово когда».
 
-1. [tech] ... (25м) — Done: ...
-2. [interview] ... (20м) — Done: ...
-3. [tech/interview] ... (15м) — Done: ...
-
-Отметь Done в боте до 19:00.
+1. [tech] ... (25м)
+Как сделать: ...
+Готово когда: ...
 ```
 
 Also write machine-readable JSON to `data/outbox/tasks_YYYY-MM-DD.json`:
@@ -40,7 +43,14 @@ Also write machine-readable JSON to `data/outbox/tasks_YYYY-MM-DD.json`:
   "date": "YYYY-MM-DD",
   "deadline_msk": "19:00",
   "tasks": [
-    {"id": "t1", "kind": "tech", "title": "...", "minutes": 25, "done_criteria": "..."}
+    {
+      "id": "t1",
+      "kind": "tech",
+      "title": "Short name",
+      "minutes": 25,
+      "rules": "Step-by-step instructions and constraints...",
+      "done_criteria": "Exact checklist for Done"
+    }
   ]
 }
 ```

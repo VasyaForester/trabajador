@@ -1,0 +1,18 @@
+[Unit]
+Description=trabajador Telegram bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trabajador
+WorkingDirectory=/opt/trabajador
+EnvironmentFile=/opt/trabajador/.env
+ExecStart=/opt/trabajador/.venv/bin/python /opt/trabajador/run_bot.py
+Restart=always
+RestartSec=5
+# Only one polling instance — never run the bot on a home PC at the same time
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

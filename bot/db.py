@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   title TEXT NOT NULL,
   minutes INTEGER NOT NULL,
   done_criteria TEXT NOT NULL,
+  rules TEXT NOT NULL DEFAULT '',
   is_done INTEGER NOT NULL DEFAULT 0,
   carried INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL,
@@ -43,6 +44,12 @@ class Store:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as conn:
             conn.executescript(SCHEMA)
+            cols = {
+                str(r["name"])
+                for r in conn.execute("PRAGMA table_info(tasks)").fetchall()
+            }
+            if "rules" not in cols:
+                conn.execute("ALTER TABLE tasks ADD COLUMN rules TEXT NOT NULL DEFAULT ''")
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -73,13 +80,14 @@ class Store:
             for t in tasks:
                 conn.execute(
                     """
-                    INSERT INTO tasks(task_key, day, kind, title, minutes, done_criteria, is_done, carried, created_at)
-                    VALUES(?, ?, ?, ?, ?, ?, 0, ?, ?)
+                    INSERT INTO tasks(task_key, day, kind, title, minutes, done_criteria, rules, is_done, carried, created_at)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
                     ON CONFLICT(task_key, day) DO UPDATE SET
                       kind=excluded.kind,
                       title=excluded.title,
                       minutes=excluded.minutes,
                       done_criteria=excluded.done_criteria,
+                      rules=excluded.rules,
                       carried=excluded.carried
                     """,
                     (
@@ -89,6 +97,7 @@ class Store:
                         t["title"],
                         t["minutes"],
                         t["done_criteria"],
+                        t.get("rules") or "",
                         int(t.get("carried", 0)),
                         datetime.now().isoformat(timespec="seconds"),
                     ),
@@ -105,6 +114,15 @@ class Store:
                 "SELECT * FROM tasks WHERE day=? AND is_done=0 ORDER BY id",
                 (day.isoformat(),),
             ).fetchall()
+
+    def clear_incomplete_for_day(self, day: date) -> int:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM tasks WHERE day=? AND is_done=0",
+                (day.isoformat(),),
+            )
+            self._refresh_daily_stats(conn, day.isoformat())
+            return int(cur.rowcount or 0)
 
     def tasks_for_day(self, day: date) -> list[sqlite3.Row]:
         with self._connect() as conn:

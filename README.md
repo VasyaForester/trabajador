@@ -62,7 +62,24 @@ TZ=Europe/Moscow
 5. В Telegram: `/start` → скопируйте `chat_id` в `.env` → перезапустите бота.  
 Проверка: `/ping`.
 
-> Не коммитьте `.env`. Не кладите токен в `.env.example`. Держите **один** процесс бота.
+> Не коммитьте `.env`. Не кладите токен в `.env.example`. Держите **один** запуск бота (через `scripts\start_bot.cmd` или venv python).
+
+### Автозапуск рассылок (Windows)
+
+Локальный автозапуск на ПК **не нужен**, если бот на VPS. Инструкция для Hetzner: [`deploy/VPS.md`](deploy/VPS.md).
+
+Чтобы бот поднимался после входа в Windows (только если VPS ещё нет):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_autostart.ps1
+```
+
+Расписание (пока процесс жив):
+- 09:00 МСК — motivador (задачи + Done)
+- 15:00 МСК — buscador digest из `data/outbox/jobs_YYYY-MM-DD.md`
+- сб 11:00 МСК — мотивация
+
+Свежий топ-5 вакансий каждый день: в Cursor запустите скилл **buscador** (или попросите агента) до 15:00 — файл outbox подхватит бот.
 
 ### 3. Cursor skills
 

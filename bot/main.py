@@ -14,6 +14,7 @@ from bot.handlers import (
     cmd_start,
     cmd_stats,
     cmd_tasks,
+    cmd_tasks_refresh,
     job_send_jobs,
     job_send_motivation,
     job_send_tasks,
@@ -50,6 +51,7 @@ def main() -> None:
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("ping", cmd_ping))
     app.add_handler(CommandHandler("tasks", cmd_tasks))
+    app.add_handler(CommandHandler("tasks_refresh", cmd_tasks_refresh))
     app.add_handler(CommandHandler("jobs", cmd_jobs))
     app.add_handler(CommandHandler("motivation", cmd_motivation))
     app.add_handler(CommandHandler("stats", cmd_stats))

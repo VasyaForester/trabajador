@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-23",
+  "deadline_msk": "19:00",
+  "tasks": [
+    {
+      "id": "t1",
+      "kind": "tech",
+      "title": "Threat note: agent + prompt injection",
+      "minutes": 25,
+      "rules": "На EN напиши 1 страницу (или ~15–20 строк): tool-using агент получает недоверенный текст (RAG/email). Опиши активы, путь атаки indirect prompt injection, severity, и ровно 3 mitigation (least privilege tools, isolate retrieved text, human approve на опасные действия). Не копируй чужие статьи — своими словами.",
+      "done_criteria": "Есть файл/заметка с секциями assets / attack path / severity / 3 mitigations"
+    },
+    {
+      "id": "t2",
+      "kind": "interview",
+      "title": "STAR: AI security investigation",
+      "minutes": 20,
+      "rules": "На EN напиши STAR (Situation/Task/Action/Result) ≥120 слов про расследование AI/security риска. Result должен содержать конкретный исход (контроль внедрён / риск принят / инцидент закрыт). Это заготовка ответа на собеседовании.",
+      "done_criteria": "Текст ≥120 слов с явными блоками S/T/A/R"
+    },
+    {
+      "id": "t3",
+      "kind": "tech",
+      "title": "Eval harness: 5 abuse/test cases",
+      "minutes": 15,
+      "rules": "Составь 5 тест-кейсов для агента/LLM: для каждого input, ожидаемое поведение, pass/fail. Обязательно включи: prompt injection, опасный tool call, нормальный happy-path. Можно таблицей в заметках.",
+      "done_criteria": "Ровно 5 кейсов в формате input / expected / pass-fail"
+    }
+  ]
+}
