@@ -21,6 +21,9 @@ Replace paths/user if different.
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv git
+# Prefer Python 3.11/3.12 if available (3.14 breaks older telegram libs without a loop shim):
+#   sudo apt install -y python3.12 python3.12-venv
+#   python3.12 -m venv .venv
 
 sudo useradd -r -m -d /opt/trabajador -s /bin/bash trabajador || true
 sudo mkdir -p /opt/trabajador
@@ -78,6 +81,7 @@ sudo systemctl restart trabajador-bot
 | `Unauthorized` | Bad/revoked token in VPS `.env` |
 | Service exits immediately | Wrong path, missing `.venv`, or missing `.env` |
 | `Не найден project venv` / exit code 2 | Run via `.venv/bin/python`, or `git pull` after Linux fix to `run_bot.py` |
+| `RuntimeError: There is no current event loop` | Python 3.14 + old PTB; `git pull` (loop shim) or recreate venv with 3.12 |
 | `ModuleNotFoundError: telegram` | `pip install -r requirements.txt` inside the **server** `.venv` |
 
 ## Quick diagnose on VPS
