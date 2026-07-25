@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+import sys
 
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler
 
@@ -27,13 +29,29 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     level=logging.INFO,
 )
-# Avoid leaking bot token via httpx URL logs
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
 log = logging.getLogger("trabajador")
 
 
+def _ensure_event_loop() -> None:
+    """Python 3.14+: get_event_loop() no longer creates a loop automatically."""
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+
 def main() -> None:
+    _ensure_event_loop()
+    if sys.version_info >= (3, 14):
+        log.warning(
+            "Python %s.%s detected; prefer 3.12 on VPS if problems persist",
+            sys.version_info.major,
+            sys.version_info.minor,
+        )
+
     settings = load_settings()
     settings.outbox_dir.mkdir(parents=True, exist_ok=True)
     settings.runtime_dir.mkdir(parents=True, exist_ok=True)
@@ -63,7 +81,6 @@ def main() -> None:
     if jq is None:
         raise RuntimeError("JobQueue is unavailable. Install: pip install 'python-telegram-bot[job-queue]'")
 
-    # Times are interpreted in settings.timezone via tzinfo on job — PTB uses datetime.time + tzinfo
     from datetime import time
     from zoneinfo import ZoneInfo
 
@@ -73,7 +90,7 @@ def main() -> None:
     jq.run_daily(
         job_send_motivation,
         time=time(11, 0, tzinfo=tz),
-        days=(5,),  # Saturday: PTB uses Mon=0 .. Sun=6
+        days=(5,),
         name="weekly_motivation",
     )
 
