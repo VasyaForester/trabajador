@@ -94,33 +94,43 @@ def _search_links() -> str:
     return "\n".join(f"• {x}" for x in links)
 
 
-def format_jobs_digest(outbox: Path, applications_csv: Path, day: date) -> str:
+def ensure_today_digest(outbox: Path, applications_csv: Path, day: date) -> Path | None:
     """
-    Always prefer concrete vacancies:
-    1) today's outbox
-    2) latest outbox (repeat OK)
-    3) top rows from applications.csv (repeat OK)
-    4) search links only if tracker/outbox empty
+    Make sure jobs_YYYY-MM-DD.md exists for today.
+    Copies latest outbox or builds from tracker (repeats OK).
     """
-    today = _read_outbox_day(outbox, day)
-    if today:
-        return f"🔍 Вакансии на {day.isoformat()} (топ под тебя)\n\n{today}"
+    outbox.mkdir(parents=True, exist_ok=True)
+    today_path = outbox / f"jobs_{day.isoformat()}.md"
+    if today_path.exists() and today_path.read_text(encoding="utf-8").strip():
+        return today_path
 
     latest = _latest_outbox(outbox)
     if latest:
-        src_day, body = latest
-        note = ""
-        if src_day != day:
-            note = f"(повтор дайджеста от {src_day.isoformat()} — актуальных файлов на сегодня ещё нет)\n\n"
-        return f"🔍 Вакансии на {day.isoformat()}\n{note}{body}"
+        _src_day, body = latest
+        # strip a leading "# Jobs ..." header if present; rewrite for today
+        lines = body.splitlines()
+        if lines and lines[0].startswith("# Jobs"):
+            body = "\n".join(lines[1:]).strip()
+        today_path.write_text(f"# Jobs {day.isoformat()}\n\n{body}\n", encoding="utf-8")
+        return today_path
 
     tracker = _from_tracker(applications_csv, limit=5)
     if tracker:
-        return (
-            f"🔍 Вакансии на {day.isoformat()}\n"
-            f"(из трекера applications.csv — повтор разрешён)\n\n"
-            f"{tracker}"
-        )
+        today_path.write_text(f"# Jobs {day.isoformat()}\n\n{tracker}\n", encoding="utf-8")
+        return today_path
+    return None
+
+
+def format_jobs_digest(outbox: Path, applications_csv: Path, day: date) -> str:
+    """
+    Always prefer concrete vacancies:
+    1) ensure/create today's outbox (from latest or tracker)
+    2) search links only if tracker/outbox empty
+    """
+    ensure_today_digest(outbox, applications_csv, day)
+    today = _read_outbox_day(outbox, day)
+    if today:
+        return f"🔍 Вакансии на {day.isoformat()} (топ под тебя)\n\n{today}"
 
     return (
         f"🔍 Вакансии на {day.isoformat()}\n\n"
