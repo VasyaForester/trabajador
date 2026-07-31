@@ -32,10 +32,11 @@ InfoJobs, Infoempleo, Indeed ES, Tecnoempleo, Jooble, LinkedIn (public pages onl
 ## Workflow
 1. Search each site with role keywords + `Spain` / city / `remoto`.
 2. Rank by: role fit → seniority fit → salary signal → sponsorship clarity → recency.
-3. Deduplicate against `data/applications.csv` (same URL or same company+title).
-4. Write today's digest to `data/outbox/jobs_YYYY-MM-DD.md` (Moscow date).
-5. Append new rows to `data/applications.csv` with `status=found`.
-6. If user asks to send now, format for Telegram (see Output).
+3. Prefer new finds; **repeats are OK** if a vacancy is still relevant (user user preference). Still avoid flooding tracker with exact same URL on the same day.
+4. Write today's digest to `data/outbox/jobs_YYYY-MM-DD.md` (Moscow date). Always write a concrete top-5 file — never leave the day empty.
+5. Append new/repeated rows to `data/applications.csv` with `status=found` (optional note `repeat` if reused).
+6. Push/sync to VPS so the bot can send at 15:00. The bot also falls back to the latest outbox or tracker if today's file is missing.
+7. If user asks to send now, format for Telegram (see Output).
 
 ## Output (Telegram / daily 15:00 MSK)
 For each of top 5, exactly:

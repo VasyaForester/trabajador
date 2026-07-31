@@ -1,21 +1,13 @@
 from __future__ import annotations
 
 import csv
+import re
 from datetime import date
 from pathlib import Path
 from urllib.parse import quote_plus
 
 
-SEARCH_QUERIES = [
-    "AI Security Researcher",
-    "AI Engineer",
-    "AI Data Analyst",
-    "Machine Learning Security",
-    "LLM Security",
-]
-
-
-def _read_outbox(outbox: Path, day: date) -> str | None:
+def _read_outbox_day(outbox: Path, day: date) -> str | None:
     path = outbox / f"jobs_{day.isoformat()}.md"
     if path.exists():
         text = path.read_text(encoding="utf-8").strip()
@@ -23,8 +15,74 @@ def _read_outbox(outbox: Path, day: date) -> str | None:
     return None
 
 
+def _latest_outbox(outbox: Path) -> tuple[date, str] | None:
+    """Most recent jobs_YYYY-MM-DD.md (repeats allowed when today missing)."""
+    if not outbox.exists():
+        return None
+    best: tuple[date, Path] | None = None
+    for path in outbox.glob("jobs_*.md"):
+        m = re.fullmatch(r"jobs_(\d{4}-\d{2}-\d{2})\.md", path.name)
+        if not m:
+            continue
+        try:
+            d = date.fromisoformat(m.group(1))
+        except ValueError:
+            continue
+        if best is None or d > best[0]:
+            best = (d, path)
+    if best is None:
+        return None
+    text = best[1].read_text(encoding="utf-8").strip()
+    return (best[0], text) if text else None
+
+
+def _from_tracker(applications_csv: Path, limit: int = 5) -> str | None:
+    """Build Telegram-style digest from newest tracker rows (repeats OK)."""
+    if not applications_csv.exists():
+        return None
+    with applications_csv.open(encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    if not rows:
+        return None
+
+    # Newest first; skip explicit skips / closed if noted
+    rows = list(reversed(rows))
+    picked: list[dict[str, str]] = []
+    seen_urls: set[str] = set()
+    for r in rows:
+        url = (r.get("url") or "").strip()
+        if not url or url in seen_urls:
+            continue
+        if (r.get("status") or "").lower() in {"skip", "closed", "rejected"}:
+            continue
+        seen_urls.add(url)
+        picked.append(r)
+        if len(picked) >= limit:
+            break
+    if not picked:
+        return None
+
+    blocks = []
+    for i, r in enumerate(picked, start=1):
+        title = (r.get("title") or "Role").strip()
+        company = (r.get("company") or "?").strip()
+        location = (r.get("location") or "Spain").strip()
+        mode = (r.get("work_mode") or "unknown").strip()
+        salary = (r.get("salary") or "n/d").strip()
+        visa = (r.get("visa_sponsorship") or "unknown").strip()
+        url = (r.get("url") or "").strip()
+        blocks.append(
+            f"{i}. {title} — {company}\n"
+            f"📍 {location} | {mode}\n"
+            f"💰 {salary}\n"
+            f"Visa sponsorship: {visa}\n"
+            f"🔗 {url}"
+        )
+    return "\n\n".join(blocks)
+
+
 def _search_links() -> str:
-    q = quote_plus("AI Security OR AI Engineer OR \"Data Analyst\" Spain")
+    q = quote_plus('AI Security OR AI Engineer OR "Data Analyst" Spain')
     links = [
         f"InfoJobs: https://www.infojobs.net/jobsearch/search-results/list.xhtml?keyword={q}",
         f"Indeed ES: https://es.indeed.com/jobs?q={quote_plus('AI Engineer OR AI Security')}&l=España",
@@ -37,27 +95,38 @@ def _search_links() -> str:
 
 
 def format_jobs_digest(outbox: Path, applications_csv: Path, day: date) -> str:
-    out = _read_outbox(outbox, day)
-    if out:
-        header = f"🔍 Вакансии на {day.isoformat()} (топ под тебя)\n\n"
-        return header + out
+    """
+    Always prefer concrete vacancies:
+    1) today's outbox
+    2) latest outbox (repeat OK)
+    3) top rows from applications.csv (repeat OK)
+    4) search links only if tracker/outbox empty
+    """
+    today = _read_outbox_day(outbox, day)
+    if today:
+        return f"🔍 Вакансии на {day.isoformat()} (топ под тебя)\n\n{today}"
 
-    # Fallback: remind to run buscador + deep links + recent tracker count
-    tracked = 0
-    if applications_csv.exists():
-        with applications_csv.open(encoding="utf-8", newline="") as f:
-            tracked = max(0, sum(1 for _ in csv.DictReader(f)))
+    latest = _latest_outbox(outbox)
+    if latest:
+        src_day, body = latest
+        note = ""
+        if src_day != day:
+            note = f"(повтор дайджеста от {src_day.isoformat()} — актуальных файлов на сегодня ещё нет)\n\n"
+        return f"🔍 Вакансии на {day.isoformat()}\n{note}{body}"
+
+    tracker = _from_tracker(applications_csv, limit=5)
+    if tracker:
+        return (
+            f"🔍 Вакансии на {day.isoformat()}\n"
+            f"(из трекера applications.csv — повтор разрешён)\n\n"
+            f"{tracker}"
+        )
 
     return (
         f"🔍 Вакансии на {day.isoformat()}\n\n"
-        "Пока нет файла `data/outbox/jobs_YYYY-MM-DD.md`.\n"
-        "В Cursor запусти скилл **buscador** — он соберёт топ-5 и запишет outbox; "
-        "завтра/сегодня после этого дайджест станет конкретным.\n\n"
-        f"В трекере сейчас записей: {tracked}\n\n"
+        "Трекер и outbox пусты. Запусти **buscador** в Cursor.\n\n"
         "Быстрые поиски:\n"
-        f"{_search_links()}\n\n"
-        "Формат каждой вакансии:\n"
-        "название · зарплата · город · формат · Visa sponsorship · ссылка"
+        f"{_search_links()}"
     )
 
 
